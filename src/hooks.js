@@ -1,6 +1,6 @@
-import React, {useState, useEffect} from 'react'
+import {useState, useEffect} from 'react'
 import axios from "axios"
-import useLocalStorage from '../../react-cards-pokemon-solution/src/hooks';
+
 
 const useFlip = () =>{
     const[state,setState] = useState(true);
@@ -12,30 +12,32 @@ const useFlip = () =>{
     return [state,flipCard]
 }
 
-const useAxios = (key,url) =>{
-    const [response,setResponse] = useLocalStorage(key);
+function useAxios(keyInLS, baseUrl) {
+    const [responses, setResponses] = useLocalStorageState(keyInLS);
 
-    const addResponseData = async (formatter = data => data,restOfUrl = "") =>{
-    const response = await axios.get(`${baseUrl}${restOfUrl}`);
-    setResponse(data => [...data, formatter(response.data)]);
-    };
+    const addResponseData = async (formatter = data => data, restOfUrl = "") => {
+        const response = await axios.get(`${baseUrl}${restOfUrl}`);
+        setResponses(data => [...data, formatter(response.data)]);
+      };
 
-    const clearResponses = () => setResponse([]);
+    const clearResponses = () => setResponses([]);
 
-    return [response, addResponseData, clearResponses];
+    return [responses, addResponseData, clearResponses];
+  }
+
+const useLocalStorageState = (key, defaultValue=[]) =>{
+    if (localStorage.getItem(key)) {
+        defaultValue = JSON.parse(localStorage.getItem(key));
+      }
+      const [value, setValue] = useState(defaultValue);
+
+      useEffect(() => {
+        localStorage.setItem(key, JSON.stringify(value));
+      }, [value, key]);
+
+      return [value, setValue];
 }
 
-const useLocalStorageState = (key, defaultValue) =>{
- const [state,setState] = useState(() =>{
-     let value = JSON.parse(window.localStorage.getItem(key) || defaultValue);
-        return value;
- });
- useEffect(() =>{
-     window.localStorage.setItem(key,state)
- },[key,state])
+export default useLocalStorageState;
 
- return [state,setState]
-}
-export default useLocalStorage;
-
-export { useFlip, useAxios, useLocalStorage};
+export { useFlip, useAxios, useLocalStorageState};
